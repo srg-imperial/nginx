@@ -57,6 +57,8 @@ ngx_event_accept(ngx_event_t *ev)
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "accept on %V, ready: %d", &ls->addr_text, ev->available);
 
+    open("dummy", O_RDONLY);
+
     do {
         socklen = NGX_SOCKADDRLEN;
 
