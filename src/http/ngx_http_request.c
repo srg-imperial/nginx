@@ -3190,6 +3190,7 @@ ngx_http_set_lingering_close(ngx_http_request_t *r)
     ngx_event_t               *rev, *wev;
     ngx_connection_t          *c;
     ngx_http_core_loc_conf_t  *clcf;
+    ngx_pool_t                *pool;
 
     c = r->connection;
 
@@ -3222,6 +3223,23 @@ ngx_http_set_lingering_close(ngx_http_request_t *r)
         ngx_http_close_request(r, 0);
         return;
     }
+
+    pool = r->pool;
+    {
+        ngx_pool_cleanup_t  *c;
+        for (c = pool->cleanup; c; c = c->next) {
+            if (c->handler) {
+                ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
+                               "run cleanup: %p", c);
+                c->handler(c->data);
+            }
+        }
+        pool->cleanup = NULL;
+    }
+
+    r->connection->log->action = "logging request";
+
+    ngx_http_log_request(r);
 
     if (rev->ready) {
         ngx_http_lingering_close_handler(rev);
@@ -3453,9 +3471,6 @@ ngx_http_free_request(ngx_http_request_t *r, ngx_int_t rc)
         r->headers_out.status = rc;
     }
 
-    log->action = "logging request";
-
-    ngx_http_log_request(r);
 
     log->action = "closing request";
 
