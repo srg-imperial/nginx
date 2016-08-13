@@ -10,7 +10,10 @@ CLANG  = $(shell which clang)
 
 # For debugging
 STRIP  = $(shell which true)
-CFLAGS = -O0 -g
+# Compile with a different libc
+#NGINX_LIBC      = /data/repos/varan/glibc/install
+#NGINX_LIBC_V    = 2.23
+#NGINX_LIBC_LINK = -B$(NGINX_LIBC)/lib -Wl,-rpath-link,$(NGINX_LIBC)/lib -Wl,-dynamic-linker=$(NGINX_LIBC)/lib/ld-$(NGINX_LIBC_V).so
 
 # NGINX config flags
 NGINX_CFG_FLAGS=
@@ -76,6 +79,7 @@ $(NGINX_GCC):
   	--prefix=$(INSTALL_BUILD_DIR) \
 	--with-cc=$(GCC)              \
 	--with-cc-opt="$(CFLAGS)"     \
+	--with-ld-opt="$(NGINX_LIBC_LINK)"\
 	$(NGINX_CFG_FLAGS)
 	make -C .. -B install
 	rm -rf $(INSTALL_GCC) || true
@@ -89,7 +93,7 @@ $(NGINX_GCC_ASAN):
   	--prefix=$(INSTALL_BUILD_DIR)                \
 	--with-cc=$(GCC)                             \
 	--with-cc-opt="$(CFLAGS) -fsanitize=address" \
-	--with-ld-opt="-fsanitize=address"           \
+	--with-ld-opt="$(NGINX_LIBC_LINK) -fsanitize=address"\
 	$(NGINX_CFG_FLAGS)
 	make -C .. -B install
 	rm -rf $(INSTALL_GCC_ASAN) || true
